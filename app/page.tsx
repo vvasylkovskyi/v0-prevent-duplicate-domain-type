@@ -43,7 +43,7 @@ const INTEGRATIONS: WorkflowIntegration[] = [
 
 // Initial mock data showing the constraint scenarios
 const INITIAL_CONNECTIONS: WorkflowConnection[] = [
-  // Grafana: logs:api configured, metrics:api supported but not configured
+  // Grafana: logs:api configured, all others supported but not configured
   {
     domain: 'logs',
     server_name: 'grafana',
@@ -54,13 +54,31 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     workflow_connection_id: 'conn-001',
   },
   {
+    domain: 'logs',
+    server_name: 'grafana',
+    workflow_integration_id: 'pagerduty.com:grafana:1',
+    type: 'mcp',
+    status: 'disabled',
+    health: 'not setup',
+    workflow_connection_id: null,
+  },
+  {
     domain: 'metrics',
     server_name: 'grafana',
     workflow_integration_id: 'pagerduty.com:grafana:1',
     type: 'api',
     status: 'disabled',
     health: 'not setup',
-    workflow_connection_id: null, // Supported but not configured
+    workflow_connection_id: null,
+  },
+  {
+    domain: 'metrics',
+    server_name: 'grafana',
+    workflow_integration_id: 'pagerduty.com:grafana:1',
+    type: 'mcp',
+    status: 'disabled',
+    health: 'not setup',
+    workflow_connection_id: null,
   },
   // Datadog: only supports metrics (not logs), has metrics:mcp configured
   {
