@@ -12,28 +12,50 @@ import { Badge } from '@/components/ui/badge'
 const DOMAIN_OPTIONS = ['logs', 'metrics']
 const TYPE_OPTIONS = ['api', 'mcp']
 
-// Initial mock data
+// Initial mock data showing the constraint scenarios
 const INITIAL_CONNECTIONS: WorkflowConnection[] = [
+  // Grafana has 2 connections: logs:api and logs:mcp
   {
     domain: 'logs',
     server_name: 'grafana',
+    workflow_integration_id: 'pagerduty.com:grafana:1',
     type: 'api',
     status: 'enabled',
-    workflow_connection_id: 'conn-456',
+    workflow_connection_id: 'conn-001',
   },
   {
     domain: 'logs',
-    server_name: 'datadog',
+    server_name: 'grafana',
+    workflow_integration_id: 'pagerduty.com:grafana:1',
     type: 'mcp',
     status: 'enabled',
-    workflow_connection_id: 'conn-567',
+    workflow_connection_id: 'conn-002',
   },
+  // Datadog has 1 connection: metrics:mcp
+  {
+    domain: 'metrics',
+    server_name: 'datadog',
+    workflow_integration_id: 'pagerduty.com:datadog:1',
+    type: 'mcp',
+    status: 'enabled',
+    workflow_connection_id: 'conn-003',
+  },
+  // Observe has 2 connections: metrics:api and logs:api
   {
     domain: 'metrics',
     server_name: 'observe',
+    workflow_integration_id: 'pagerduty.com:observe:1',
     type: 'api',
     status: 'disabled',
-    workflow_connection_id: 'conn-678',
+    workflow_connection_id: 'conn-004',
+  },
+  {
+    domain: 'logs',
+    server_name: 'observe',
+    workflow_integration_id: 'pagerduty.com:observe:1',
+    type: 'api',
+    status: 'enabled',
+    workflow_connection_id: 'conn-005',
   },
 ]
 
@@ -54,10 +76,13 @@ export default function WorkflowConnectionsPage() {
     )
   }
 
-  // Calculate currently used domain:type combinations for display
-  const usedCombinations = connections.map(
-    (c) => `${c.domain}:${c.type}`
-  )
+  // Group by server for summary display
+  const serverSummary = connections.reduce((acc, conn) => {
+    const key = conn.server_name
+    if (!acc[key]) acc[key] = []
+    acc[key].push(`${conn.domain}:${conn.type}`)
+    return acc
+  }, {} as Record<string, string[]>)
 
   return (
     <main className="min-h-screen bg-background p-8">
@@ -67,8 +92,8 @@ export default function WorkflowConnectionsPage() {
             Workflow Connections
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage your workflow connections. Each domain + type combination can
-            only be assigned to one server.
+            Manage your workflow connections. Each server can have multiple connections, 
+            but cannot have duplicate domain + type combinations.
           </p>
         </div>
 
@@ -89,20 +114,24 @@ export default function WorkflowConnectionsPage() {
                   d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              Uniqueness Constraint
+              Uniqueness Constraint (per server)
             </CardTitle>
             <CardDescription>
-              Each <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">domain:type</code> combination must be unique. 
-              Options that would create conflicts are disabled in the dropdowns.
+              Within each server, each <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">domain:type</code> combination must be unique.
+              Different servers can have the same combination (e.g., both grafana and datadog can have <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">logs:api</code>).
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm text-muted-foreground">Currently allocated:</span>
-              {usedCombinations.map((combo) => (
-                <Badge key={combo} variant="outline" className="font-mono text-xs">
-                  {combo}
-                </Badge>
+            <div className="space-y-2">
+              {Object.entries(serverSummary).map(([server, combos]) => (
+                <div key={server} className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium w-20">{server}:</span>
+                  {combos.map((combo) => (
+                    <Badge key={combo} variant="outline" className="font-mono text-xs">
+                      {combo}
+                    </Badge>
+                  ))}
+                </div>
               ))}
             </div>
           </CardContent>
