@@ -21,6 +21,7 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     workflow_integration_id: 'pagerduty.com:grafana:1',
     type: 'api',
     status: 'enabled',
+    health: 'healthy',
     workflow_connection_id: 'conn-001',
   },
   {
@@ -29,6 +30,7 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     workflow_integration_id: 'pagerduty.com:grafana:1',
     type: 'mcp',
     status: 'enabled',
+    health: 'not setup',
     workflow_connection_id: 'conn-002',
   },
   // Datadog has 1 connection: metrics:mcp
@@ -38,6 +40,7 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     workflow_integration_id: 'pagerduty.com:datadog:1',
     type: 'mcp',
     status: 'enabled',
+    health: 'healthy',
     workflow_connection_id: 'conn-003',
   },
   // Observe has 2 connections: metrics:api and logs:api
@@ -47,6 +50,7 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     workflow_integration_id: 'pagerduty.com:observe:1',
     type: 'api',
     status: 'disabled',
+    health: 'unhealthy',
     workflow_connection_id: 'conn-004',
   },
   {
@@ -55,6 +59,7 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     workflow_integration_id: 'pagerduty.com:observe:1',
     type: 'api',
     status: 'enabled',
+    health: 'healthy',
     workflow_connection_id: 'conn-005',
   },
 ]
