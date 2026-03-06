@@ -346,13 +346,13 @@ export function WorkflowConnectionsTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[180px]">Domain</TableHead>
-            <TableHead className="w-[140px]">Type</TableHead>
-            <TableHead className="w-[160px]">Status</TableHead>
-            <TableHead className="w-[120px]">Health</TableHead>
-            <TableHead className="text-muted-foreground text-xs">
+            <TableHead className="w-[140px] text-muted-foreground text-xs">
               Connection ID
             </TableHead>
+            <TableHead className="w-[140px]">Domain</TableHead>
+            <TableHead className="w-[120px]">Type</TableHead>
+            <TableHead className="w-[140px]">Status</TableHead>
+            <TableHead className="w-[120px]">Health</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -373,7 +373,10 @@ export function WorkflowConnectionsTable({
                     key={connection.workflow_connection_id}
                     className="border-l-2 border-l-primary/20"
                   >
-                    <TableCell className="pl-10">
+                    <TableCell className="pl-10 text-muted-foreground text-xs font-mono">
+                      {connection.workflow_connection_id}
+                    </TableCell>
+                    <TableCell>
                       <DomainSelector
                         connection={connection}
                         connections={connections}
@@ -426,9 +429,6 @@ export function WorkflowConnectionsTable({
                         health={connection.health}
                         connectionId={connection.workflow_connection_id}
                       />
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs font-mono">
-                      {connection.workflow_connection_id}
                     </TableCell>
                   </TableRow>
                 ))}
