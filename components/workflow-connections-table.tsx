@@ -139,36 +139,36 @@ function HealthBadge({
     healthy: {
       label: 'Healthy',
       className: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/20',
+      linkClassName: 'text-emerald-600',
       icon: (
         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       ),
-      showLink: false,
     },
     'not setup': {
       label: 'Not Setup',
       className: 'bg-amber-500/15 text-amber-600 border-amber-500/20',
+      linkClassName: 'text-amber-600',
       icon: (
         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       ),
-      showLink: true,
     },
     unhealthy: {
       label: 'Unhealthy',
       className: 'bg-red-500/15 text-red-600 border-red-500/20',
+      linkClassName: 'text-red-600',
       icon: (
         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       ),
-      showLink: true,
     },
   }
 
-  const { label, className, icon, showLink } = config[health]
+  const { label, className, linkClassName, icon } = config[health]
 
   return (
     <div className="flex items-center gap-2">
@@ -176,22 +176,20 @@ function HealthBadge({
         {icon}
         {label}
       </Badge>
-      {showLink && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <a
-              href={`/connections/${connectionId}/details`}
-              className={cn(
-                'p-1 rounded hover:bg-muted transition-colors',
-                health === 'unhealthy' ? 'text-red-600' : 'text-amber-600'
-              )}
-            >
-              <ExternalLinkIcon className="h-3.5 w-3.5" />
-            </a>
-          </TooltipTrigger>
-          <TooltipContent>View connection details</TooltipContent>
-        </Tooltip>
-      )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <a
+            href={`/connections/${connectionId}/details`}
+            className={cn(
+              'p-1 rounded hover:bg-muted transition-colors',
+              linkClassName
+            )}
+          >
+            <ExternalLinkIcon className="h-3.5 w-3.5" />
+          </a>
+        </TooltipTrigger>
+        <TooltipContent>View connection details</TooltipContent>
+      </Tooltip>
     </div>
   )
 }
