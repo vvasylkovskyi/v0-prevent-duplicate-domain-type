@@ -90,8 +90,33 @@ function wouldConflictWithinServer(
   }
 }
 
+// External link icon component
+function ExternalLinkIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+      />
+    </svg>
+  )
+}
+
 // Health badge component
-function HealthBadge({ health }: { health: ConnectionHealth }) {
+function HealthBadge({
+  health,
+  connectionId,
+}: {
+  health: ConnectionHealth
+  connectionId: string
+}) {
   const config = {
     healthy: {
       label: 'Healthy',
@@ -101,6 +126,7 @@ function HealthBadge({ health }: { health: ConnectionHealth }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       ),
+      showLink: false,
     },
     'not setup': {
       label: 'Not Setup',
@@ -110,6 +136,7 @@ function HealthBadge({ health }: { health: ConnectionHealth }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       ),
+      showLink: true,
     },
     unhealthy: {
       label: 'Unhealthy',
@@ -119,16 +146,35 @@ function HealthBadge({ health }: { health: ConnectionHealth }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       ),
+      showLink: true,
     },
   }
 
-  const { label, className, icon } = config[health]
+  const { label, className, icon, showLink } = config[health]
 
   return (
-    <Badge variant="outline" className={cn('gap-1', className)}>
-      {icon}
-      {label}
-    </Badge>
+    <div className="flex items-center gap-2">
+      <Badge variant="outline" className={cn('gap-1', className)}>
+        {icon}
+        {label}
+      </Badge>
+      {showLink && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href={`/connections/${connectionId}/details`}
+              className={cn(
+                'p-1 rounded hover:bg-muted transition-colors',
+                health === 'unhealthy' ? 'text-red-600' : 'text-amber-600'
+              )}
+            >
+              <ExternalLinkIcon className="h-3.5 w-3.5" />
+            </a>
+          </TooltipTrigger>
+          <TooltipContent>View connection details</TooltipContent>
+        </Tooltip>
+      )}
+    </div>
   )
 }
 
@@ -376,7 +422,10 @@ export function WorkflowConnectionsTable({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <HealthBadge health={connection.health} />
+                      <HealthBadge
+                        health={connection.health}
+                        connectionId={connection.workflow_connection_id}
+                      />
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs font-mono">
                       {connection.workflow_connection_id}
