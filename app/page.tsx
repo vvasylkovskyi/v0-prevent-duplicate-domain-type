@@ -4,6 +4,7 @@ import { useState } from 'react'
 import {
   WorkflowConnectionsTable,
   type WorkflowConnection,
+  type WorkflowIntegration,
 } from '@/components/workflow-connections-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +12,14 @@ import { Badge } from '@/components/ui/badge'
 // Available options
 const DOMAIN_OPTIONS = ['logs', 'metrics']
 const TYPE_OPTIONS = ['api', 'mcp']
+
+// All integrations (including those with no connections set up)
+const INTEGRATIONS: WorkflowIntegration[] = [
+  { server_name: 'grafana', workflow_integration_id: 'pagerduty.com:grafana:1' },
+  { server_name: 'datadog', workflow_integration_id: 'pagerduty.com:datadog:1' },
+  { server_name: 'observe', workflow_integration_id: 'pagerduty.com:observe:1' },
+  { server_name: 'honeycomb', workflow_integration_id: 'pagerduty.com:honeycomb:1' }, // No connections yet
+]
 
 // Initial mock data showing the constraint scenarios
 const INITIAL_CONNECTIONS: WorkflowConnection[] = [
@@ -145,6 +154,7 @@ export default function WorkflowConnectionsPage() {
         {/* Main table */}
         <WorkflowConnectionsTable
           connections={connections}
+          integrations={INTEGRATIONS}
           onConnectionUpdate={handleConnectionUpdate}
           domainOptions={DOMAIN_OPTIONS}
           typeOptions={TYPE_OPTIONS}

@@ -38,8 +38,15 @@ export interface WorkflowConnection {
   workflow_connection_id: string
 }
 
+// Integration that may or may not have connections
+export interface WorkflowIntegration {
+  server_name: string
+  workflow_integration_id: string
+}
+
 interface WorkflowConnectionsTableProps {
   connections: WorkflowConnection[]
+  integrations: WorkflowIntegration[] // All integrations (including those with no connections)
   onConnectionUpdate: (
     connectionId: string,
     updates: Partial<Pick<WorkflowConnection, 'domain' | 'type' | 'status'>>
@@ -48,11 +55,20 @@ interface WorkflowConnectionsTableProps {
   typeOptions: string[]
 }
 
-// Group connections by workflow_integration_id (server)
+// Group connections by workflow_integration_id (server), including integrations with no connections
 function groupConnectionsByServer(
-  connections: WorkflowConnection[]
-): Map<string, WorkflowConnection[]> {
-  const grouped = new Map<string, WorkflowConnection[]>()
+  connections: WorkflowConnection[],
+  integrations: WorkflowIntegration[]
+): Map<string, { integration: WorkflowIntegration; connections: WorkflowConnection[] }> {
+  const grouped = new Map<string, { integration: WorkflowIntegration; connections: WorkflowConnection[] }>()
+  
+  // Initialize with all integrations (including those with no connections)
+  integrations.forEach((integration) => {
+    grouped.set(integration.workflow_integration_id, {
+      integration,
+      connections: [],
+    })
+  })
   
   // Sort connections by server_name, then domain, then type for consistent display
   const sorted = [...connections].sort((a, b) => {
@@ -62,8 +78,10 @@ function groupConnectionsByServer(
   })
   
   sorted.forEach((conn) => {
-    const existing = grouped.get(conn.workflow_integration_id) || []
-    grouped.set(conn.workflow_integration_id, [...existing, conn])
+    const existing = grouped.get(conn.workflow_integration_id)
+    if (existing) {
+      existing.connections.push(conn)
+    }
   })
   
   return grouped
@@ -333,13 +351,43 @@ function ServerGroupHeader({
   )
 }
 
+// Row for integration with no connections
+function NoConnectionRow({ 
+  integrationId 
+}: { 
+  integrationId: string 
+}) {
+  return (
+    <TableRow className="border-l-2 border-l-muted-foreground/20">
+      <TableCell colSpan={4} className="pl-10 text-muted-foreground text-sm">
+        No connections configured
+      </TableCell>
+      <TableCell>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href={`/integrations/${encodeURIComponent(integrationId)}/setup`}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+            >
+              Set up connection
+              <ExternalLinkIcon className="h-3.5 w-3.5" />
+            </a>
+          </TooltipTrigger>
+          <TooltipContent>Configure a new connection for this integration</TooltipContent>
+        </Tooltip>
+      </TableCell>
+    </TableRow>
+  )
+}
+
 export function WorkflowConnectionsTable({
   connections,
+  integrations,
   onConnectionUpdate,
   domainOptions,
   typeOptions,
 }: WorkflowConnectionsTableProps) {
-  const groupedConnections = groupConnectionsByServer(connections)
+  const groupedConnections = groupConnectionsByServer(connections, integrations)
 
   return (
     <div className="rounded-lg border">
@@ -356,16 +404,20 @@ export function WorkflowConnectionsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Array.from(groupedConnections.entries()).map(([integrationId, serverConnections]) => {
-            const serverName = serverConnections[0].server_name
+          {Array.from(groupedConnections.entries()).map(([integrationId, { integration, connections: serverConnections }]) => {
             return (
               <React.Fragment key={integrationId}>
                 {/* Server group header */}
                 <ServerGroupHeader
-                  serverName={serverName}
+                  serverName={integration.server_name}
                   integrationId={integrationId}
                   connectionCount={serverConnections.length}
                 />
+                
+                {/* Show "no connections" row if integration has no connections */}
+                {serverConnections.length === 0 && (
+                  <NoConnectionRow integrationId={integrationId} />
+                )}
                 
                 {/* Connection rows for this server */}
                 {serverConnections.map((connection) => (
