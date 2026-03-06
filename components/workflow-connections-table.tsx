@@ -452,22 +452,25 @@ export function WorkflowConnectionsTable({
         </TableHeader>
         <TableBody>
           {Array.from(groupedConnections.entries()).map(([integrationId, { integration, connections: serverConnections }]) => {
+            // Filter to only show connections with actual connection IDs (not null)
+            const displayConnections = serverConnections.filter(c => c.workflow_connection_id !== null)
+            
             return (
               <React.Fragment key={integrationId}>
                 {/* Server group header */}
                 <ServerGroupHeader
                   serverName={integration.server_name}
                   integrationId={integrationId}
-                  connectionCount={serverConnections.length}
+                  connectionCount={displayConnections.length}
                 />
                 
-                {/* Show "no connections" row if integration has no connections */}
-                {serverConnections.length === 0 && (
+                {/* Show "no connections" row if integration has no configured connections */}
+                {displayConnections.length === 0 && (
                   <NoConnectionRow integrationId={integrationId} />
                 )}
                 
-                {/* Connection rows for this server */}
-                {serverConnections.map((connection) => (
+                {/* Connection rows for this server (only those with actual connections) */}
+                {displayConnections.map((connection) => (
                   <TableRow 
                     key={connection.workflow_connection_id}
                     className="border-l-2 border-l-primary/20"
