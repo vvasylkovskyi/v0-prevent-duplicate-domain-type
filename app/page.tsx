@@ -9,8 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 
 // Available options
-const DOMAIN_OPTIONS = ['logs', 'metrics', 'traces', 'events']
-const TYPE_OPTIONS = ['api', 'mcp', 'webhook', 'streaming']
+const DOMAIN_OPTIONS = ['logs', 'metrics']
+const TYPE_OPTIONS = ['api', 'mcp']
 
 // Initial mock data
 const INITIAL_CONNECTIONS: WorkflowConnection[] = [
@@ -22,25 +22,18 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     workflow_connection_id: 'conn-456',
   },
   {
-    domain: 'metrics',
+    domain: 'logs',
     server_name: 'datadog',
-    type: 'api',
+    type: 'mcp',
     status: 'enabled',
     workflow_connection_id: 'conn-567',
   },
   {
-    domain: 'traces',
-    server_name: 'jaeger',
-    type: 'mcp',
+    domain: 'metrics',
+    server_name: 'observe',
+    type: 'api',
     status: 'disabled',
     workflow_connection_id: 'conn-678',
-  },
-  {
-    domain: 'events',
-    server_name: 'splunk',
-    type: 'webhook',
-    status: 'enabled',
-    workflow_connection_id: 'conn-789',
   },
 ]
 
