@@ -453,28 +453,53 @@ export function WorkflowConnectionsTable({
                       />
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={connection.status === 'enabled'}
-                          onCheckedChange={(checked) =>
-                            onConnectionUpdate(connection.workflow_connection_id, {
-                              status: checked ? 'enabled' : 'disabled',
-                            })
-                          }
-                        />
-                        <Badge
-                          variant={
-                            connection.status === 'enabled' ? 'default' : 'secondary'
-                          }
-                          className={cn(
-                            connection.status === 'enabled'
-                              ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/20'
-                              : 'bg-muted text-muted-foreground'
-                          )}
-                        >
-                          {connection.status}
-                        </Badge>
-                      </div>
+                      {connection.health === 'healthy' ? (
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={connection.status === 'enabled'}
+                            onCheckedChange={(checked) =>
+                              onConnectionUpdate(connection.workflow_connection_id, {
+                                status: checked ? 'enabled' : 'disabled',
+                              })
+                            }
+                          />
+                          <Badge
+                            variant={
+                              connection.status === 'enabled' ? 'default' : 'secondary'
+                            }
+                            className={cn(
+                              connection.status === 'enabled'
+                                ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/20'
+                                : 'bg-muted text-muted-foreground'
+                            )}
+                          >
+                            {connection.status}
+                          </Badge>
+                        </div>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-2 cursor-not-allowed">
+                              <Switch
+                                checked={connection.status === 'enabled'}
+                                disabled
+                                className="opacity-50"
+                              />
+                              <Badge
+                                variant="secondary"
+                                className="bg-muted text-muted-foreground opacity-50"
+                              >
+                                {connection.status}
+                              </Badge>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {connection.health === 'not setup'
+                              ? 'Complete setup before enabling'
+                              : 'Fix connection health before enabling'}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </TableCell>
                     <TableCell>
                       <HealthBadge

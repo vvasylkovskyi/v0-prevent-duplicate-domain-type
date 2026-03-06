@@ -23,7 +23,7 @@ const INTEGRATIONS: WorkflowIntegration[] = [
 
 // Initial mock data showing the constraint scenarios
 const INITIAL_CONNECTIONS: WorkflowConnection[] = [
-  // Grafana has 2 connections: logs:api and logs:mcp
+  // Grafana has 1 connection: logs:api
   {
     domain: 'logs',
     server_name: 'grafana',
@@ -32,15 +32,6 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     status: 'enabled',
     health: 'healthy',
     workflow_connection_id: 'conn-001',
-  },
-  {
-    domain: 'logs',
-    server_name: 'grafana',
-    workflow_integration_id: 'pagerduty.com:grafana:1',
-    type: 'mcp',
-    status: 'enabled',
-    health: 'not setup',
-    workflow_connection_id: 'conn-002',
   },
   // Datadog has 1 connection: metrics:mcp
   {
