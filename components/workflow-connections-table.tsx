@@ -35,13 +35,15 @@ export interface WorkflowConnection {
   type: string
   status: 'enabled' | 'disabled'
   health: ConnectionHealth
-  workflow_connection_id: string
+  workflow_connection_id: string | null // null = supported but not configured
 }
 
 // Integration that may or may not have connections
 export interface WorkflowIntegration {
   server_name: string
   workflow_integration_id: string
+  supported_domains: string[] // domains this integration supports
+  supported_types: string[] // types this integration supports
 }
 
 interface WorkflowConnectionsTableProps {
@@ -88,6 +90,7 @@ function groupConnectionsByServer(
 }
 
 // Check if a specific domain+type combination would conflict WITHIN THE SAME SERVER
+// Only conflicts if there's another row with an actual connection (non-null workflow_connection_id)
 function wouldConflictWithinServer(
   connections: WorkflowConnection[],
   currentConnection: WorkflowConnection,
@@ -95,17 +98,35 @@ function wouldConflictWithinServer(
   type: string
 ): { conflicts: boolean; connectionId?: string } {
   // Only check connections from the same server (workflow_integration_id)
+  // AND that have an actual connection set up (non-null workflow_connection_id)
   const conflicting = connections.find(
     (conn) =>
       conn.workflow_connection_id !== currentConnection.workflow_connection_id &&
+      conn.workflow_connection_id !== null && // Must have an actual connection
       conn.workflow_integration_id === currentConnection.workflow_integration_id &&
       conn.domain === domain &&
       conn.type === type
   )
   return {
     conflicts: !!conflicting,
-    connectionId: conflicting?.workflow_connection_id,
+    connectionId: conflicting?.workflow_connection_id ?? undefined,
   }
+}
+
+// Check if a domain is supported by the integration
+function isDomainSupported(
+  integration: WorkflowIntegration,
+  domain: string
+): boolean {
+  return integration.supported_domains.includes(domain)
+}
+
+// Check if a type is supported by the integration
+function isTypeSupported(
+  integration: WorkflowIntegration,
+  type: string
+): boolean {
+  return integration.supported_types.includes(type)
 }
 
 // External link icon component
@@ -221,15 +242,17 @@ function DisabledSelectOption({
   )
 }
 
-// Domain selector with conflict detection (scoped to same server)
+// Domain selector with conflict detection (scoped to same server) and support check
 function DomainSelector({
   connection,
   connections,
+  integration,
   domainOptions,
   onUpdate,
 }: {
   connection: WorkflowConnection
   connections: WorkflowConnection[]
+  integration: WorkflowIntegration
   domainOptions: string[]
   onUpdate: (domain: string) => void
 }) {
@@ -240,6 +263,18 @@ function DomainSelector({
       </SelectTrigger>
       <SelectContent>
         {domainOptions.map((domain) => {
+          // First check if domain is supported by this integration
+          if (!isDomainSupported(integration, domain)) {
+            return (
+              <DisabledSelectOption
+                key={domain}
+                label={domain}
+                reason={`${connection.server_name} does not support ${domain}`}
+              />
+            )
+          }
+
+          // Then check for conflicts
           const conflict = wouldConflictWithinServer(
             connections,
             connection,
@@ -268,15 +303,17 @@ function DomainSelector({
   )
 }
 
-// Type selector with conflict detection (scoped to same server)
+// Type selector with conflict detection (scoped to same server) and support check
 function TypeSelector({
   connection,
   connections,
+  integration,
   typeOptions,
   onUpdate,
 }: {
   connection: WorkflowConnection
   connections: WorkflowConnection[]
+  integration: WorkflowIntegration
   typeOptions: string[]
   onUpdate: (type: string) => void
 }) {
@@ -287,6 +324,18 @@ function TypeSelector({
       </SelectTrigger>
       <SelectContent>
         {typeOptions.map((type) => {
+          // First check if type is supported by this integration
+          if (!isTypeSupported(integration, type)) {
+            return (
+              <DisabledSelectOption
+                key={type}
+                label={type}
+                reason={`${connection.server_name} does not support ${type}`}
+              />
+            )
+          }
+
+          // Then check for conflicts
           const conflict = wouldConflictWithinServer(
             connections,
             connection,
@@ -424,15 +473,18 @@ export function WorkflowConnectionsTable({
                     className="border-l-2 border-l-primary/20"
                   >
                     <TableCell className="pl-10 text-muted-foreground text-xs font-mono">
-                      {connection.workflow_connection_id}
+                      {connection.workflow_connection_id ?? (
+                        <span className="italic text-muted-foreground/60">not configured</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <DomainSelector
                         connection={connection}
                         connections={connections}
+                        integration={integration}
                         domainOptions={domainOptions}
                         onUpdate={(domain) =>
-                          onConnectionUpdate(connection.workflow_connection_id, {
+                          onConnectionUpdate(connection.workflow_connection_id!, {
                             domain,
                           })
                         }
@@ -442,21 +494,22 @@ export function WorkflowConnectionsTable({
                       <TypeSelector
                         connection={connection}
                         connections={connections}
+                        integration={integration}
                         typeOptions={typeOptions}
                         onUpdate={(type) =>
-                          onConnectionUpdate(connection.workflow_connection_id, {
+                          onConnectionUpdate(connection.workflow_connection_id!, {
                             type,
                           })
                         }
                       />
                     </TableCell>
                     <TableCell>
-                      {connection.health === 'healthy' ? (
+                      {connection.health === 'healthy' && connection.workflow_connection_id ? (
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={connection.status === 'enabled'}
                             onCheckedChange={(checked) =>
-                              onConnectionUpdate(connection.workflow_connection_id, {
+                              onConnectionUpdate(connection.workflow_connection_id!, {
                                 status: checked ? 'enabled' : 'disabled',
                               })
                             }
@@ -492,7 +545,9 @@ export function WorkflowConnectionsTable({
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
-                            {connection.health === 'not setup'
+                            {!connection.workflow_connection_id
+                              ? 'Set up connection first'
+                              : connection.health === 'not setup'
                               ? 'Complete setup before enabling'
                               : 'Fix connection health before enabling'}
                           </TooltipContent>
@@ -500,10 +555,25 @@ export function WorkflowConnectionsTable({
                       )}
                     </TableCell>
                     <TableCell>
-                      <HealthBadge
-                        health={connection.health}
-                        connectionId={connection.workflow_connection_id}
-                      />
+                      {connection.workflow_connection_id ? (
+                        <HealthBadge
+                          health={connection.health}
+                          connectionId={connection.workflow_connection_id}
+                        />
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a
+                              href={`/integrations/${encodeURIComponent(connection.workflow_integration_id)}/setup?domain=${connection.domain}&type=${connection.type}`}
+                              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                            >
+                              Set up
+                              <ExternalLinkIcon className="h-3.5 w-3.5" />
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent>Configure this connection</TooltipContent>
+                        </Tooltip>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -13,17 +13,37 @@ import { Badge } from '@/components/ui/badge'
 const DOMAIN_OPTIONS = ['logs', 'metrics']
 const TYPE_OPTIONS = ['api', 'mcp']
 
-// All integrations (including those with no connections set up)
+// All integrations with their supported domains and types
 const INTEGRATIONS: WorkflowIntegration[] = [
-  { server_name: 'grafana', workflow_integration_id: 'pagerduty.com:grafana:1' },
-  { server_name: 'datadog', workflow_integration_id: 'pagerduty.com:datadog:1' },
-  { server_name: 'observe', workflow_integration_id: 'pagerduty.com:observe:1' },
-  { server_name: 'honeycomb', workflow_integration_id: 'pagerduty.com:honeycomb:1' }, // No connections yet
+  { 
+    server_name: 'grafana', 
+    workflow_integration_id: 'pagerduty.com:grafana:1',
+    supported_domains: ['logs', 'metrics'],
+    supported_types: ['api', 'mcp'],
+  },
+  { 
+    server_name: 'datadog', 
+    workflow_integration_id: 'pagerduty.com:datadog:1',
+    supported_domains: ['metrics'], // datadog does NOT support logs
+    supported_types: ['api', 'mcp'],
+  },
+  { 
+    server_name: 'observe', 
+    workflow_integration_id: 'pagerduty.com:observe:1',
+    supported_domains: ['logs', 'metrics'],
+    supported_types: ['api'], // observe does NOT support mcp
+  },
+  { 
+    server_name: 'honeycomb', 
+    workflow_integration_id: 'pagerduty.com:honeycomb:1',
+    supported_domains: ['logs'],
+    supported_types: ['api', 'mcp'],
+  }, // No connections yet
 ]
 
 // Initial mock data showing the constraint scenarios
 const INITIAL_CONNECTIONS: WorkflowConnection[] = [
-  // Grafana has 1 connection: logs:api
+  // Grafana: logs:api configured, metrics:api supported but not configured
   {
     domain: 'logs',
     server_name: 'grafana',
@@ -33,7 +53,16 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     health: 'healthy',
     workflow_connection_id: 'conn-001',
   },
-  // Datadog has 1 connection: metrics:mcp
+  {
+    domain: 'metrics',
+    server_name: 'grafana',
+    workflow_integration_id: 'pagerduty.com:grafana:1',
+    type: 'api',
+    status: 'disabled',
+    health: 'not setup',
+    workflow_connection_id: null, // Supported but not configured
+  },
+  // Datadog: only supports metrics (not logs), has metrics:mcp configured
   {
     domain: 'metrics',
     server_name: 'datadog',
@@ -43,7 +72,7 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     health: 'healthy',
     workflow_connection_id: 'conn-003',
   },
-  // Observe has 2 connections: metrics:api and logs:api
+  // Observe: supports logs & metrics but only api (not mcp)
   {
     domain: 'metrics',
     server_name: 'observe',
@@ -62,6 +91,7 @@ const INITIAL_CONNECTIONS: WorkflowConnection[] = [
     health: 'healthy',
     workflow_connection_id: 'conn-005',
   },
+  // Honeycomb: no connections yet (but integration exists)
 ]
 
 export default function WorkflowConnectionsPage() {
